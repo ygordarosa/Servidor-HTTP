@@ -65,7 +65,7 @@ public class ServidorArquivos {
                 if (arquivo != null) {
                     resposta = arquivo.getConteudo();
                     saida.println("HTTP/1.1 200 OK");
-                    saida.println("Content-Type: text/html; charset=UTF-8");
+                    saida.println("Content-Type: "+ arquivo.getTipo() +"; charset=UTF-8");
                     saida.println("Content-Length: " + resposta.length());
                     saida.println("Connection: close");
                     saida.println();
