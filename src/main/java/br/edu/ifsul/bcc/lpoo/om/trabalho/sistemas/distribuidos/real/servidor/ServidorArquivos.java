@@ -8,6 +8,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import org.json.JSONObject;
+
 
 public class ServidorArquivos {
 
@@ -59,8 +61,13 @@ public class ServidorArquivos {
             if (mensagem.startsWith("GET")) {
                 String[] parts = mensagem.split(" ");
                 String caminhoRecurso = parts[1].substring(1); // Remove o primeiro "/"
+                // Extrai o valor do parâmetro `caminho`
+                if (caminhoRecurso.contains("?caminho=")) {
+                    caminhoRecurso = caminhoRecurso.split("caminho=")[1];
+                }
+            
+            System.out.println("Caminho do recurso: " + caminhoRecurso);
                 Arquivos arquivo = arquivos.get(caminhoRecurso);
-
                 String resposta;
                 if (arquivo != null) {
                     resposta = arquivo.getConteudo();
@@ -80,10 +87,64 @@ public class ServidorArquivos {
                     saida.println(resposta);
                 }
             }
-            if (mensagem.startsWith("POST")){
-                
-
+            else if (mensagem.startsWith("POST")) {
+            String linha;
+            int contentLength = 0;
+            while (!(linha = entrada.readLine()).isEmpty()) {
+                if (linha.startsWith("Content-Length:")) {
+                    contentLength = Integer.parseInt(linha.split(" ")[1]);
+                }
             }
+
+            char[] corpo = new char[contentLength];
+            entrada.read(corpo, 0, contentLength);
+            String conteudoCorpo = new String(corpo);
+
+            try {
+                JSONObject json = new JSONObject(conteudoCorpo);
+                String name = json.optString("name");
+                String content = json.optString("content");
+                String type = json.optString("type");
+                
+                System.out.println(name + "\n" + content + "\n" + type);
+
+                if (!name.isEmpty() && !content.isEmpty() && !type.isEmpty()) {
+                    if (arquivos.containsKey(name)) {
+                        String resposta = "Arquivo já existe";
+                        saida.println("HTTP/1.1 409 Conflict");
+                        saida.println("Content-Type: text/plain; charset=UTF-8");
+                        saida.println("Content-Length: " + resposta.length());
+                        saida.println();
+                        saida.println(resposta);
+                    } else {
+                        arquivos.put(name, new Arquivos(name, content, type));
+                        String resposta = "Arquivo criado com sucesso";
+                        saida.println("HTTP/1.1 201 Created");
+                        saida.println("Content-Type: " + type + "; charset=UTF-8");
+                        saida.println("Content-Length: " + resposta.length());
+                        saida.println();
+                        saida.println(resposta);
+                    }
+                } else {
+                    saida.println("HTTP/1.1 400 Bad Request");
+                    saida.println("Content-Type: text/plain; charset=UTF-8");
+                    saida.println("Connection: close");
+                    saida.println("Content-Length: 20");
+                    saida.println();
+                    saida.println("Dados do POST incompletos");
+                }
+            } catch (Exception e) {
+                saida.println("HTTP/1.1 400 Bad Request");
+                saida.println("Content-Type: text/plain; charset=UTF-8");
+                saida.println("Connection: close");
+                saida.println("Content-Length: 18");
+                saida.println();
+                saida.println("Erro ao processar JSON");
+            }
+            
+                
+        }
+        System.out.println(arquivos);
         } finally {
             socket.close();
         }
