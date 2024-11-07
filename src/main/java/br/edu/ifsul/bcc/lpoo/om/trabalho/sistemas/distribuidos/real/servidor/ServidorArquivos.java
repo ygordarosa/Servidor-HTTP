@@ -47,7 +47,8 @@ public class ServidorArquivos {
                                 "</body>\n" +
                                 "</html>";
             String indexName = "index.html";
-            arquivos.put(indexName, new Arquivos(indexName, indexText));
+            String indexType = "text/html";
+            arquivos.put(indexName, new Arquivos(indexName, indexText, indexType));
 
             String mensagem = entrada.readLine();
             if (mensagem == null) {
@@ -58,11 +59,11 @@ public class ServidorArquivos {
             if (mensagem.startsWith("GET")) {
                 String[] parts = mensagem.split(" ");
                 String caminhoRecurso = parts[1].substring(1); // Remove o primeiro "/"
-                Arquivos arquivo = arquivos.get(indexName);
+                Arquivos arquivo = arquivos.get(caminhoRecurso);
 
                 String resposta;
                 if (arquivo != null) {
-                    resposta = indexText;
+                    resposta = arquivo.getConteudo();
                     saida.println("HTTP/1.1 200 OK");
                     saida.println("Content-Type: text/html; charset=UTF-8");
                     saida.println("Content-Length: " + resposta.length());
@@ -81,8 +82,7 @@ public class ServidorArquivos {
             }
             if (mensagem.startsWith("POST")){
                 
-                
-                
+
             }
         } finally {
             socket.close();

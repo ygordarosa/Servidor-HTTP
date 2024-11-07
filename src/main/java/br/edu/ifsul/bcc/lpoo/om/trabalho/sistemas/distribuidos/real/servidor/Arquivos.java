@@ -12,10 +12,12 @@ package server;
 public class Arquivos {
     private String nome;
     private String conteudo;
+    private String tipo;
     
-    public Arquivos(String nome, String conteudo) {
+    public Arquivos(String nome, String conteudo, String tipo) {
         this.nome = nome;
         this.conteudo = conteudo;
+        this.tipo = tipo;
     }
 
     public String getNome() {
@@ -29,4 +31,13 @@ public class Arquivos {
     public void setConteudo(String conteudo) {
         this.conteudo = conteudo;
     }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
 }
