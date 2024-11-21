@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,38 +43,40 @@ public class ServidorArquivos {
         return servidorSocket.accept();
     }
 
+    
+    public String recuperaArquivo(String nome) throws IOException{
+        String filepath = "./src/main/java/public/" + nome;
+
+        Path path = Paths.get(filepath);
+        String indexText = Files.readString(path);
+        return indexText;
+    }
+    
+    public void salvaConteudo(String nome, String conteudo) throws IOException{
+        String filepath = "./src/main/java/public/" + nome;
+        Path caminho = Paths.get(filepath);
+        Files.writeString(caminho, conteudo);
+    }
+    
     public void trataProtocolo(Socket socket) throws IOException {
         try (BufferedReader entrada = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter saida = new PrintWriter(socket.getOutputStream(), true)) {
 
             Estado estado = Estado.CONECTADO;
-
-            // Conteúdo de exemplo
-            String indexText = "<!DOCTYPE html>\n" +
-                                "<html lang=\"en\">\n" +
-                                "<head>\n" +
-                                "  <meta charset=\"UTF-8\">\n" +
-                                "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
-                                "  <title>Document</title>\n" +
-                                "</head>\n" +
-                                "<body>\n" +
-                                "  <p>bem vindo</p>\n" +
-                                "</body>\n" +
-                                "</html>";
             String indexName = "index.html";
             String indexType = "text/html";
-            arquivos.put(indexName, new Arquivos(indexName, indexText, indexType));
-
+            arquivos.put(indexName, new Arquivos(indexName, indexType));
             String mensagem = entrada.readLine();
             if (mensagem == null) {
                 estado = Estado.FINALIZADO;
                 return;
             }
 
-            if (mensagem.startsWith("GET")) {
+            if (mensagem.startsWith("GET /arquivos")) {
                 String[] parts = mensagem.split(" ");
                 String caminhoRecurso = parts[1].substring(1); // Remove o primeiro "/"
                 // Extrai o valor do parâmetro `caminho`
+                caminhoRecurso = caminhoRecurso.split("/")[1];
                 if (caminhoRecurso.contains("?caminho=")) {
                     caminhoRecurso = caminhoRecurso.split("caminho=")[1];
                 }
@@ -80,14 +85,14 @@ public class ServidorArquivos {
                 Arquivos arquivo = arquivos.get(caminhoRecurso);
                 String resposta;
                 if (arquivo != null) {
-                    resposta = arquivo.getConteudo();
+                    resposta = recuperaArquivo(caminhoRecurso);
                     System.out.println(arquivo.getTipo());
                     saida.println("HTTP/1.1 200 OK");
                    
                     saida.println("Content-Type: "+ arquivo.getTipo() +"; charset=UTF-8");
                     if(arquivo.getTipo().equals("image/png")){
                         System.out.println("imagem");
-                        byte[] imageBytes = Base64.getDecoder().decode(arquivo.getConteudo());
+                        byte[] imageBytes = Base64.getDecoder().decode(resposta);
                         saida.println("Content-Length: " + imageBytes.length);
                         saida.println("Connection: close");
                         saida.println();
@@ -194,7 +199,8 @@ public class ServidorArquivos {
                         saida.println();
                         saida.println(resposta);
                     } else {
-                        arquivos.put(name, new Arquivos(name, content, type));
+                        salvaConteudo(name, content);
+                        arquivos.put(name, new Arquivos(name, type));
                         String resposta = "Arquivo criado com sucesso";
                         saida.println("HTTP/1.1 201 Created");
                         saida.println("Content-Type: " + type + "; charset=UTF-8");

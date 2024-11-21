@@ -11,25 +11,15 @@ package server;
  */
 public class Arquivos {
     private String nome;
-    private String conteudo;
     private String tipo;
     
-    public Arquivos(String nome, String conteudo, String tipo) {
+    public Arquivos(String nome, String tipo) {
         this.nome = nome;
-        this.conteudo = conteudo;
         this.tipo = tipo;
     }
 
     public String getNome() {
         return nome;
-    }
-
-    public String getConteudo() {
-        return conteudo;
-    }
-    
-    public void setConteudo(String conteudo) {
-        this.conteudo = conteudo;
     }
 
     public String getTipo() {
